@@ -1,6 +1,7 @@
 package com.anysoftkeyboard.ime;
 
 import android.content.Intent;
+import android.support.annotation.CallSuper;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 import android.view.View;
@@ -20,7 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
-public abstract class AnySoftKeyboardThemeOverlay extends AnySoftKeyboardIncognito {
+public abstract class AnySoftKeyboardThemeOverlay extends AnySoftKeyboardRxPrefs {
     @VisibleForTesting
     static final OverlayData INVALID_OVERLAY_DATA = new EmptyOverlayData();
 
@@ -49,7 +50,6 @@ public abstract class AnySoftKeyboardThemeOverlay extends AnySoftKeyboardIncogni
         );
     }
 
-    @VisibleForTesting
     protected OverlyDataCreator createOverlayDataCreator() {
         return new OverlayDataOverrider(
                 new OverlayDataNormalizer(new OverlyDataCreatorForAndroid.Light(this), 96, true),
@@ -59,11 +59,16 @@ public abstract class AnySoftKeyboardThemeOverlay extends AnySoftKeyboardIncogni
     @Override
     public void onStartInputView(EditorInfo info, boolean restarting) {
         super.onStartInputView(info, restarting);
-        if (OverlyDataCreatorForAndroid.OS_SUPPORT_FOR_ACCENT && !Objects.equals(info.packageName, mLastOverlayPackage)) {
+
+        applyThemeOverlay(info, false);
+    }
+
+    protected void applyThemeOverlay(EditorInfo info, boolean force) {
+        if (OverlyDataCreatorForAndroid.OS_SUPPORT_FOR_ACCENT && (force || !Objects.equals(info.packageName, mLastOverlayPackage))) {
             final InputViewBinder inputView = getInputView();
             if (inputView != null) {
                 mCurrentOverlayData = INVALID_OVERLAY_DATA;
-                if (mApplyRemoteAppColors) {
+                if (mApplyRemoteAppColors || force) {
                     mLastOverlayPackage = info.packageName;
                     final Intent launchIntentForPackage = getPackageManager().getLaunchIntentForPackage(info.packageName);
                     if (launchIntentForPackage != null) {
@@ -78,6 +83,11 @@ public abstract class AnySoftKeyboardThemeOverlay extends AnySoftKeyboardIncogni
         }
     }
 
+    @Override
+    public void onAddOnsCriticalChange() {
+        mLastOverlayPackage = "";
+        super.onAddOnsCriticalChange();
+    }
 
     @Override
     public View onCreateInputView() {
@@ -95,7 +105,7 @@ public abstract class AnySoftKeyboardThemeOverlay extends AnySoftKeyboardIncogni
         mCandidateView = view.findViewById(R.id.candidates);
     }
 
-    @Override
+    @CallSuper
     protected void setCandidatesTheme(KeyboardTheme theme) {
         if (mCandidateView != null) {
             mCandidateView.setOverlayData(mCurrentOverlayData);

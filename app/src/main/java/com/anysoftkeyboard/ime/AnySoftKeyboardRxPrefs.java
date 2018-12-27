@@ -9,6 +9,8 @@ import com.anysoftkeyboard.keyboards.KeyboardFactory;
 import com.anysoftkeyboard.prefs.RxSharedPrefs;
 import com.anysoftkeyboard.quicktextkeys.QuickTextKeyFactory;
 import com.anysoftkeyboard.rx.GenericOnError;
+import com.anysoftkeyboard.theme.KeyboardTheme;
+import com.anysoftkeyboard.theme.KeyboardThemeFactory;
 import com.anysoftkeyboard.utils.LocaleTools;
 import com.menny.android.anysoftkeyboard.AnyApplication;
 import com.menny.android.anysoftkeyboard.R;
@@ -62,6 +64,11 @@ public abstract class AnySoftKeyboardRxPrefs extends AnySoftKeyboardService {
                 .asObservable().subscribe(value -> mSwapPunctuationAndSpace = value, GenericOnError.onError("settings_key_bool_should_swap_punctuation_and_space")));
         addDisposable(mRxPrefs.getString(R.string.settings_key_long_press_timeout, R.string.settings_default_long_press_timeout)
                 .asObservable().map(Integer::parseInt).subscribe(value -> mLongPressTimeout = value, GenericOnError.onError("settings_key_long_press_timeout")));
+        addDisposable(KeyboardThemeFactory.observeCurrentTheme(getApplicationContext())
+                .subscribe(this::onThemeChanged, GenericOnError.onError("KeyboardThemeFactory.observeCurrentTheme")));
+    }
+
+    protected void onThemeChanged(@NonNull KeyboardTheme theme) {
     }
 
     @NonNull

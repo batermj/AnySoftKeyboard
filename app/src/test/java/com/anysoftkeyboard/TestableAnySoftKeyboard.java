@@ -30,7 +30,6 @@ import com.anysoftkeyboard.keyboards.views.CandidateView;
 import com.anysoftkeyboard.keyboards.views.KeyboardViewContainerView;
 import com.anysoftkeyboard.quicktextkeys.QuickKeyHistoryRecords;
 import com.anysoftkeyboard.quicktextkeys.TagsExtractor;
-import com.anysoftkeyboard.theme.KeyboardTheme;
 import com.menny.android.anysoftkeyboard.R;
 import com.menny.android.anysoftkeyboard.SoftKeyboard;
 
@@ -63,7 +62,7 @@ public class TestableAnySoftKeyboard extends SoftKeyboard {
     private AbstractInputMethodSessionImpl mCreatedInputMethodSession;
 
     private OverlyDataCreator mOriginalOverlayDataCreator;
-    private OverlyDataCreator mMockOverlayDataCreator;
+    private OverlyDataCreator mSpiedOverlayCreator;
     private PackageManager mSpiedPackageManager;
 
     public static EditorInfo createEditorInfoTextWithSuggestions() {
@@ -91,14 +90,12 @@ public class TestableAnySoftKeyboard extends SoftKeyboard {
         mOriginalOverlayDataCreator = super.createOverlayDataCreator();
         Assert.assertNotNull(mOriginalOverlayDataCreator);
 
-        mMockOverlayDataCreator = Mockito.mock(OverlyDataCreator.class);
-        Mockito.doReturn(new OverlayData()).when(mMockOverlayDataCreator).createOverlayData(Mockito.any());
-
-        return mMockOverlayDataCreator;
+        mSpiedOverlayCreator = Mockito.spy(mOriginalOverlayDataCreator);
+        return mSpiedOverlayCreator;
     }
 
     public OverlyDataCreator getMockOverlayDataCreator() {
-        return mMockOverlayDataCreator;
+        return mSpiedOverlayCreator;
     }
 
     public OverlyDataCreator getOriginalOverlayDataCreator() {
@@ -137,13 +134,6 @@ public class TestableAnySoftKeyboard extends SoftKeyboard {
     protected Suggest createSuggest() {
         Assert.assertNull(mSpiedSuggest);
         return mSpiedSuggest = Mockito.spy(new TestableSuggest(this));
-    }
-
-    //MAGIC: now it is visible for tests
-    @VisibleForTesting
-    @Override
-    public void onKeyboardThemeChanged(@NonNull KeyboardTheme theme) {
-        super.onKeyboardThemeChanged(theme);
     }
 
     //MAGIC: now it is visible for tests
